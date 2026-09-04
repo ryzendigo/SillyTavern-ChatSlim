@@ -1,0 +1,12 @@
+{
+    "display_name": "ChatSlim",
+    "loading_order": 100,
+    "requires": [],
+    "optional": [],
+    "js": "index.js",
+    "css": "style.css",
+    "author": "ryzendigo",
+    "version": "0.1.0",
+    "homePage": "https://github.com/ryzendigo/SillyTavern-ChatSlim",
+    "auto_update": false
+}

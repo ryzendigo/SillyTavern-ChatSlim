@@ -1,0 +1,4 @@
+.chatslim_block label { display: block; margin: 6px 0; }
+.chatslim_num { width: 4em; margin: 0 4px; }
+.chatslim_status { opacity: 0.8; margin: 4px 0 8px 0; font-style: italic; }
+.chatslim_buttons { display: flex; gap: 8px; margin: 10px 0 6px 0; }
