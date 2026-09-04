@@ -6,7 +6,7 @@
     "js": "index.js",
     "css": "style.css",
     "author": "ryzendigo",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "homePage": "https://github.com/ryzendigo/SillyTavern-ChatSlim",
     "auto_update": false
 }

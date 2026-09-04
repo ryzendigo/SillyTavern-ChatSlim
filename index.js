@@ -21,7 +21,7 @@
     'use strict';
 
     const MODULE = 'chatslim';
-    const DEFAULTS = { warnMB: 6, keepLast: 60, stripScratch: true };
+    const DEFAULTS = { warnMB: 6, keepLast: 60, stripScratch: true, tailLength: 300 };
 
     function ctx() { return (window.SillyTavern && SillyTavern.getContext) ? SillyTavern.getContext() : null; }
 
@@ -116,7 +116,21 @@
             try {
                 const run = c.executeSlashCommandsWithOptions || c.executeSlashCommands || window.executeSlashCommands;
                 await run.call(c, '/branch');
-                toastr.success('Branched — you are now in a fresh light file.', 'ChatSlim');
+                // ST's native branch copies the ENTIRE history into the new file.
+                // Trim the fresh branch to the last tailLength messages so the
+                // new file is actually light. The original file keeps everything.
+                await new Promise(r => setTimeout(r, 1500));
+                const c2 = ctx();
+                const tail = Number(getSettings().tailLength) || DEFAULTS.tailLength;
+                if (c2 && Array.isArray(c2.chat) && c2.chat.length > tail) {
+                    const removed = c2.chat.length - tail;
+                    c2.chat.splice(0, removed);
+                    await c2.saveChat();
+                    if (typeof c2.reloadCurrentChat === 'function') await c2.reloadCurrentChat();
+                    toastr.success('Branched and trimmed to the last ' + tail + ' messages (' + removed + ' left behind in the original).', 'ChatSlim');
+                } else {
+                    toastr.success('Branched — you are now in a fresh file.', 'ChatSlim');
+                }
             } catch (e) {
                 console.error('[ChatSlim] branch failed', e);
                 toastr.error('Branch failed — use Chat Management > Create Branch.', 'ChatSlim');
@@ -158,6 +172,9 @@
                     <label>Keep full swipes on the last
                         <input id="chatslim_keep" type="number" min="10" max="500" step="10" value="${s.keepLast}" class="chatslim_num"> messages
                     </label>
+                    <label>Branch carries the last
+                        <input id="chatslim_tail" type="number" min="50" max="2000" step="50" value="${s.tailLength}" class="chatslim_num"> messages
+                    </label>
                     <label class="checkbox_label">
                         <input id="chatslim_scratch" type="checkbox" ${s.stripScratch ? 'checked' : ''}>
                         Strip extension scratch data (summariser reasoning)
@@ -173,6 +190,7 @@
         $('#extensions_settings2').append(html);
         $('#chatslim_warn').on('input', function () { getSettings().warnMB = Number(this.value) || DEFAULTS.warnMB; saveSettings(); });
         $('#chatslim_keep').on('input', function () { getSettings().keepLast = Number(this.value) || DEFAULTS.keepLast; saveSettings(); });
+        $('#chatslim_tail').on('input', function () { getSettings().tailLength = Number(this.value) || DEFAULTS.tailLength; saveSettings(); });
         $('#chatslim_scratch').on('input', function () { getSettings().stripScratch = this.checked; saveSettings(); });
         $('#chatslim_slim').on('click', () => doSlim(false));
         $('#chatslim_branch').on('click', () => doSlim(true));

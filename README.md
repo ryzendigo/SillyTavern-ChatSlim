@@ -38,7 +38,7 @@ incremental in core, this extension is the mitigation.
    - drops unchosen swipes (the visible message and its own swipe are untouched)
    - drops the per-swipe `swipe_info[].extra` blobs
    - blanks known scratch fields everywhere (`qvink_memory.reasoning`)
-3. **Slim & Branch** — slims, then invokes SillyTavern's native `/branch`, so
+3. **Slim & Branch** — slims, then invokes SillyTavern's native `/branch` **and trims the new file to a configurable tail** (default 300 messages — native branches copy the entire history), so
    you continue in a fresh, light file while the original stays complete on disk.
 
 ### What it never touches
