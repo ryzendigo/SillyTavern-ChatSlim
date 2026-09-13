@@ -1,3 +1,4 @@
+import { branchChat } from '../../../bookmarks.js';
 // ChatSlim — keep giant SillyTavern chats from killing the browser.
 //
 // Born from a 2,457-message / 18.7MB chat that produced "Out of Memory" and
@@ -114,13 +115,29 @@
 
         if (andBranch) {
             try {
-                const run = c.executeSlashCommandsWithOptions || c.executeSlashCommands || window.executeSlashCommands;
-                await run.call(c, '/branch');
+                // ST 1.18 has no /branch slash command any more (the parser error was shown
+                // but not thrown, and the trim below then ran on the ORIGINAL file). Use the
+                // native branchChat() from bookmarks.js and REFUSE to trim unless the chat id
+                // actually changed to a fresh file.
+                const idBefore = (typeof c.getCurrentChatId === 'function') ? c.getCurrentChatId() : (c.chatId || null);
+                let fileName = null;
+                if (typeof branchChat === 'function') {
+                    fileName = await branchChat(c.chat.length - 1);
+                } else {
+                    const run = c.executeSlashCommandsWithOptions || c.executeSlashCommands || window.executeSlashCommands;
+                    const res = await run.call(c, '/branch');
+                    if (res && res.isError) throw new Error('/branch is not available in this SillyTavern');
+                }
+                await new Promise(r => setTimeout(r, 1500));
+                const c2 = ctx();
+                const idAfter = (c2 && typeof c2.getCurrentChatId === 'function') ? c2.getCurrentChatId() : (c2 && c2.chatId) || null;
+                if (!idAfter || idAfter === idBefore) {
+                    toastr.error('Branch did not open a new file — nothing trimmed. Use Chat Management > Create Branch.', 'ChatSlim');
+                    return;
+                }
                 // ST's native branch copies the ENTIRE history into the new file.
                 // Trim the fresh branch to the last tailLength messages so the
                 // new file is actually light. The original file keeps everything.
-                await new Promise(r => setTimeout(r, 1500));
-                const c2 = ctx();
                 const tail = Number(getSettings().tailLength) || DEFAULTS.tailLength;
                 if (c2 && Array.isArray(c2.chat) && c2.chat.length > tail) {
                     const removed = c2.chat.length - tail;
